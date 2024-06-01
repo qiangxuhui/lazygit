@@ -1077,6 +1077,7 @@ func (self *LocalCommitsController) handleOpenLogMenu() error {
 				Label:     self.c.Tr.ShowGitGraph,
 				OpensMenu: true,
 				OnPress: func() error {
+					currentValue := self.c.GetAppState().GitLogShowGraph
 					onPress := func(value string) func() error {
 						return func() error {
 							self.c.GetAppState().GitLogShowGraph = value
@@ -1093,14 +1094,17 @@ func (self *LocalCommitsController) handleOpenLogMenu() error {
 							{
 								Label:   "always",
 								OnPress: onPress("always"),
+								Checked: currentValue == "always",
 							},
 							{
 								Label:   "never",
 								OnPress: onPress("never"),
+								Checked: currentValue == "never",
 							},
 							{
 								Label:   "when maximised",
 								OnPress: onPress("when-maximised"),
+								Checked: currentValue == "when-maximised",
 							},
 						},
 					})
@@ -1110,6 +1114,7 @@ func (self *LocalCommitsController) handleOpenLogMenu() error {
 				Label:     self.c.Tr.SortCommits,
 				OpensMenu: true,
 				OnPress: func() error {
+					currentValue := self.c.GetAppState().GitLogOrder
 					onPress := func(value string) func() error {
 						return func() error {
 							self.c.GetAppState().GitLogOrder = value
@@ -1131,14 +1136,17 @@ func (self *LocalCommitsController) handleOpenLogMenu() error {
 							{
 								Label:   "topological (topo-order)",
 								OnPress: onPress("topo-order"),
+								Checked: currentValue == "topo-order",
 							},
 							{
 								Label:   "date-order",
 								OnPress: onPress("date-order"),
+								Checked: currentValue == "date-order",
 							},
 							{
 								Label:   "author-date-order",
 								OnPress: onPress("author-date-order"),
+								Checked: currentValue == "author-date-order",
 							},
 						},
 					})
