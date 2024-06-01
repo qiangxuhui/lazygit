@@ -231,6 +231,11 @@ type MenuItem struct {
 	// item, as opposed to having to navigate to it
 	Key Key
 
+	// Whether the item should show a check mark. Useful for showing a
+	// radio-button style menu where one entry is marked as the current value.
+	// Clients are responsible for making sure that only one item is checked.
+	Checked bool
+
 	// The tooltip will be displayed upon highlighting the menu item
 	Tooltip string
 

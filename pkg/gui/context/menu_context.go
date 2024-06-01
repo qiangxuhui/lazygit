@@ -88,7 +88,12 @@ func (self *MenuViewModel) GetDisplayStrings(_ int, _ int) [][]string {
 			keyLabel = style.FgCyan.Sprint(keybindings.LabelFromKey(item.Key))
 		}
 
-		displayStrings = utils.Prepend(displayStrings, keyLabel)
+		checkMark := ""
+		if item.Checked {
+			checkMark = "✓"
+		}
+
+		displayStrings = utils.Prepend(displayStrings, keyLabel, checkMark)
 		return displayStrings
 	})
 }
