@@ -42,9 +42,9 @@ var SortRemoteBranches = NewIntegrationTest(NewIntegrationTestArgs{
 
 		t.ExpectPopup().Menu().Title(Equals("Sort order")).
 			Lines(
-				Contains("a ✓ Alphabetical").IsSelected(),
-				Contains("d   Date"),
-				Contains("    Cancel"),
+				Contains("a [✓] Alphabetical").IsSelected(),
+				Contains("d [ ] Date"),
+				Contains("      Cancel"),
 			).
 			Select(Contains("-committerdate")).
 			Confirm()

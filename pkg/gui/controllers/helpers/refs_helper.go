@@ -221,7 +221,7 @@ func (self *RefsHelper) CreateSortOrderMenu(sortOptionsOrder []string, onSelecte
 				return onSelected(opt.sortOrder)
 			},
 			Key:     opt.key,
-			Checked: opt.sortOrder == currentValue,
+			Checked: types.MakeMenuCheckMark(opt.sortOrder == currentValue),
 		}
 	})
 	return self.c.Menu(types.CreateMenuOptions{
