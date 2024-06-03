@@ -1094,17 +1094,17 @@ func (self *LocalCommitsController) handleOpenLogMenu() error {
 							{
 								Label:   "always",
 								OnPress: onPress("always"),
-								Checked: currentValue == "always",
+								Checked: types.MakeMenuCheckMark(currentValue == "always"),
 							},
 							{
 								Label:   "never",
 								OnPress: onPress("never"),
-								Checked: currentValue == "never",
+								Checked: types.MakeMenuCheckMark(currentValue == "never"),
 							},
 							{
 								Label:   "when maximised",
 								OnPress: onPress("when-maximised"),
-								Checked: currentValue == "when-maximised",
+								Checked: types.MakeMenuCheckMark(currentValue == "when-maximised"),
 							},
 						},
 					})
@@ -1136,17 +1136,17 @@ func (self *LocalCommitsController) handleOpenLogMenu() error {
 							{
 								Label:   "topological (topo-order)",
 								OnPress: onPress("topo-order"),
-								Checked: currentValue == "topo-order",
+								Checked: types.MakeMenuCheckMark(currentValue == "topo-order"),
 							},
 							{
 								Label:   "date-order",
 								OnPress: onPress("date-order"),
-								Checked: currentValue == "date-order",
+								Checked: types.MakeMenuCheckMark(currentValue == "date-order"),
 							},
 							{
 								Label:   "author-date-order",
 								OnPress: onPress("author-date-order"),
-								Checked: currentValue == "author-date-order",
+								Checked: types.MakeMenuCheckMark(currentValue == "author-date-order"),
 							},
 						},
 					})
