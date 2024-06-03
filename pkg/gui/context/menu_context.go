@@ -89,8 +89,10 @@ func (self *MenuViewModel) GetDisplayStrings(_ int, _ int) [][]string {
 		}
 
 		checkMark := ""
-		if item.Checked {
-			checkMark = "✓"
+		if item.Checked == types.MenuCheckMarkChecked {
+			checkMark = "[✓]"
+		} else if item.Checked == types.MenuCheckMarkUnchecked {
+			checkMark = "[ ]"
 		}
 
 		displayStrings = utils.Prepend(displayStrings, keyLabel, checkMark)

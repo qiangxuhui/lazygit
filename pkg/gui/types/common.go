@@ -216,6 +216,21 @@ type DisabledReason struct {
 	ShowErrorInPanel bool
 }
 
+type MenuCheckMark int
+
+const (
+	MenuCheckMarkNone MenuCheckMark = iota
+	MenuCheckMarkChecked
+	MenuCheckMarkUnchecked
+)
+
+func MakeMenuCheckMark(value bool) MenuCheckMark {
+	if value {
+		return MenuCheckMarkChecked
+	}
+	return MenuCheckMarkUnchecked
+}
+
 type MenuItem struct {
 	Label string
 
@@ -234,7 +249,7 @@ type MenuItem struct {
 	// Whether the item should show a check mark. Useful for showing a
 	// radio-button style menu where one entry is marked as the current value.
 	// Clients are responsible for making sure that only one item is checked.
-	Checked bool
+	Checked MenuCheckMark
 
 	// The tooltip will be displayed upon highlighting the menu item
 	Tooltip string
