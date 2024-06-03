@@ -263,6 +263,7 @@ type Model struct {
 	SubCommits   []*models.Commit
 	Remotes      []*models.Remote
 	Worktrees    []*models.Worktree
+	PullRequests []*models.GithubPullRequest
 
 	// FilteredReflogCommits are the ones that appear in the reflog panel.
 	// when in filtering mode we only include the ones that match the given path
@@ -295,6 +296,7 @@ type Mutexes struct {
 	RefreshingFilesMutex    *deadlock.Mutex
 	RefreshingBranchesMutex *deadlock.Mutex
 	RefreshingStatusMutex   *deadlock.Mutex
+	RefreshingPullRequestsMutex *deadlock.Mutex
 	LocalCommitsMutex       *deadlock.Mutex
 	SubCommitsMutex         *deadlock.Mutex
 	AuthorsMutex            *deadlock.Mutex
@@ -338,6 +340,8 @@ type IStateAccessor interface {
 	GetItemOperation(item HasUrn) ItemOperation
 	SetItemOperation(item HasUrn, operation ItemOperation)
 	ClearItemOperation(item HasUrn)
+	GetGitHubCliState() GitHubCliState
+	SetGitHubCliState(GitHubCliState)
 }
 
 type IRepoStateAccessor interface {
@@ -373,4 +377,14 @@ const (
 	SCREEN_NORMAL WindowMaximisation = iota
 	SCREEN_HALF
 	SCREEN_FULL
+)
+
+// for keeping track of whether our github CLI is installed and on a valid version
+type GitHubCliState int
+
+const (
+	UNKNOWN GitHubCliState = iota
+	VALID
+	NOT_INSTALLED
+	INVALID_VERSION
 )

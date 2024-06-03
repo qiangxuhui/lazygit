@@ -29,6 +29,7 @@ type RefreshHelper struct {
 	mergeConflictsHelper *MergeConflictsHelper
 	worktreeHelper       *WorktreeHelper
 	searchHelper         *SearchHelper
+	suggestionsHelper    *SuggestionsHelper
 }
 
 func NewRefreshHelper(
@@ -40,6 +41,7 @@ func NewRefreshHelper(
 	mergeConflictsHelper *MergeConflictsHelper,
 	worktreeHelper *WorktreeHelper,
 	searchHelper *SearchHelper,
+	suggestionsHelper *SuggestionsHelper,
 ) *RefreshHelper {
 	return &RefreshHelper{
 		c:                    c,
@@ -50,6 +52,7 @@ func NewRefreshHelper(
 		mergeConflictsHelper: mergeConflictsHelper,
 		worktreeHelper:       worktreeHelper,
 		searchHelper:         searchHelper,
+		suggestionsHelper:    suggestionsHelper,
 	}
 }
 
@@ -93,6 +96,7 @@ func (self *RefreshHelper) Refresh(options types.RefreshOptions) error {
 				types.STATUS,
 				types.BISECT_INFO,
 				types.STAGING,
+				types.PULL_REQUESTS,
 			})
 		} else {
 			scopeSet = set.NewFromSlice(options.Scope)
@@ -117,6 +121,10 @@ func (self *RefreshHelper) Refresh(options types.RefreshOptions) error {
 					self.c.Log.Infof(fmt.Sprintf("refreshed %s in %s", name, time.Since(t)))
 				})
 			}
+		}
+
+		if scopeSet.Includes(types.PULL_REQUESTS) {
+			refresh("pull requests", func() { _ = self.refreshGithubPullRequests() })
 		}
 
 		includeWorktreesWithBranches := false
@@ -761,4 +769,100 @@ func (self *RefreshHelper) refForLog() string {
 func (self *RefreshHelper) refreshView(context types.Context) error {
 	self.searchHelper.ReApplyFilter(context)
 	return self.c.PostRefreshUpdate(context)
+}
+
+func (self *RefreshHelper) refreshGithubPullRequests() error {
+	self.c.Mutexes().RefreshingPullRequestsMutex.Lock()
+	defer self.c.Mutexes().RefreshingPullRequestsMutex.Unlock()
+
+	if !self.c.UserConfig.Git.EnableGithubCli {
+		return nil
+	}
+
+	if !self.c.Git().GitHub.InGithubRepo() {
+		self.c.Model().PullRequests = []*models.GithubPullRequest{}
+		return nil
+	}
+
+	switch self.c.State().GetGitHubCliState() {
+	case types.UNKNOWN:
+		state := self.determineGithubCliState()
+		self.c.State().SetGitHubCliState(state)
+		if state != types.VALID {
+			if state == types.INVALID_VERSION {
+				// todo: i18n
+				self.c.LogAction("gh version is too old (must be version 2 or greater), so pull requests will not be shown against branches.")
+			}
+			return nil
+		}
+	case types.VALID:
+		// continue on
+	default:
+		return nil
+	}
+
+	if err := self.c.Git().GitHub.BaseRepo(); err != nil {
+		return self.promptForBaseGithubRepo()
+	}
+
+	if err := self.setGithubPullRequests(); err != nil {
+		self.c.LogAction(fmt.Sprintf("Error fetching pull requests from GitHub: %s", err.Error()))
+	}
+
+	return nil
+}
+
+func (self *RefreshHelper) promptForBaseGithubRepo() error {
+	err := self.refreshRemotes()
+	if err != nil {
+		return err
+	}
+
+	_ = self.c.Prompt(types.PromptOpts{
+		Title:               self.c.Tr.SelectRemoteRepository,
+		InitialContent:      "",
+		FindSuggestionsFunc: self.suggestionsHelper.GetRemoteRepoSuggestionsFunc(),
+		HandleConfirm: func(repository string) error {
+			return self.c.WithWaitingStatus(self.c.Tr.LcSelectingRemote, func(gocui.Task) error {
+				// `repository` is something like 'jesseduffield/lazygit'
+				_, err := self.c.Git().GitHub.SetBaseRepo(repository)
+				if err != nil {
+					return err
+				}
+
+				return self.refreshGithubPullRequests()
+			})
+		},
+	})
+
+	return nil
+}
+
+func (self *RefreshHelper) determineGithubCliState() types.GitHubCliState {
+	installed, validVersion := self.c.Git().GitHub.DetermineGitHubCliState()
+	if validVersion {
+		return types.VALID
+	} else if installed {
+		return types.INVALID_VERSION
+	} else {
+		return types.NOT_INSTALLED
+	}
+}
+
+func (self *RefreshHelper) setGithubPullRequests() error {
+	branches := lo.Filter(self.c.Model().Branches, func(branch *models.Branch, _ int) bool {
+		return branch.IsTrackingRemote()
+	})
+	branchNames := lo.Map(branches, func(branch *models.Branch, _ int) string {
+		return branch.UpstreamBranch
+	})
+
+	prs, err := self.c.Git().GitHub.FetchRecentPRs(branchNames)
+	if err != nil {
+		return err
+	}
+
+	self.c.Model().PullRequests = prs
+
+	return self.c.PostRefreshUpdate(self.c.Contexts().Branches)
 }
